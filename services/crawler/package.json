@@ -1,0 +1,27 @@
+{
+  "name": "crawler-service",
+  "version": "1.0.0",
+  "description": "Web crawler with Playwright support for indexing pages",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "load-seeds": "ts-node src/scripts/load-seeds.ts",
+    "reindex": "ts-node src/scripts/reindex-cron.ts"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.11.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "ioredis": "^5.3.2",
+    "playwright": "^1.40.0",
+    "undici": "^6.2.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

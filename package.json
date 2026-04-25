@@ -1,0 +1,16 @@
+{
+  "name": "search-engine",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "dev:crawler": "cd services/crawler && npm run dev",
+    "build:crawler": "cd services/crawler && npm run build",
+    "load-seeds": "cd services/crawler && npm run load-seeds",
+    "reindex": "cd services/crawler && npm run reindex"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
