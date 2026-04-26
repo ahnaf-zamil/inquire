@@ -3,6 +3,37 @@ import { CONFIG } from '../config';
 import { logger } from '../utils/logger';
 import { FetchResult } from './index';
 
+class Semaphore {
+  private permits: number;
+  private queue: Array<() => void> = [];
+
+  constructor(permits: number) {
+    this.permits = permits;
+  }
+
+  async acquire(): Promise<void> {
+    if (this.permits > 0) {
+      this.permits--;
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      this.queue.push(resolve);
+    });
+  }
+
+  release(): void {
+    const next = this.queue.shift();
+    if (next) {
+      next();
+    } else {
+      this.permits++;
+    }
+  }
+}
+
+const pageSemaphore = new Semaphore(CONFIG.playwrightConcurrentPages);
+
 let browser: Browser | null = null;
 let browserPromise: Promise<Browser> | null = null;
 let browserLaunchFailed = false;
@@ -37,44 +68,50 @@ export async function getBrowser(): Promise<Browser> {
 }
 
 export async function fetchWithPlaywright(url: string): Promise<FetchResult> {
-  const browser = await getBrowser();
-  const page = await browser.newPage({
-    viewport: { width: 1920, height: 1080 },
-  });
-
-  // Set realistic user agent and headers
-  await page.setExtraHTTPHeaders({
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Upgrade-Insecure-Requests': '1',
-  });
+  await pageSemaphore.acquire();
 
   try {
-    await page.goto(url, {
-      timeout: CONFIG.playwrightTimeout,
-      waitUntil: 'load',
+    const browser = await getBrowser();
+    const page = await browser.newPage({
+      viewport: { width: 1920, height: 1080 },
     });
 
-    await page.waitForTimeout(CONFIG.playwrightBufferMs);
+    // Set realistic user agent and headers
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Upgrade-Insecure-Requests': '1',
+    });
 
     try {
-      await page.waitForLoadState('networkidle', { 
-        timeout: CONFIG.playwrightNetworkidleTimeout 
+      await page.goto(url, {
+        timeout: CONFIG.playwrightTimeout,
+        waitUntil: 'load',
       });
-    } catch {
-      // Ignore timeout - continue with current DOM state
-    }
 
-    const html = await page.content();
-    return { html, contentType: 'javascript' };
-  } catch (error) {
-    logger.error('Playwright fetch error', { 
-      url, 
-      error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error,
-    });
-    throw error;
+      await page.waitForTimeout(CONFIG.playwrightBufferMs);
+
+      try {
+        await page.waitForLoadState('networkidle', {
+          timeout: CONFIG.playwrightNetworkidleTimeout
+        });
+      } catch {
+        // Ignore timeout - continue with current DOM state
+      }
+
+      const html = await page.content();
+      return { html, contentType: 'javascript' };
+    } catch (error) {
+      logger.error('Playwright fetch error', {
+        url,
+        error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error,
+      });
+      throw error;
+    } finally {
+      await page.close();
+    }
   } finally {
-    await page.close();
+    pageSemaphore.release();
   }
 }
 

@@ -25,6 +25,7 @@ export const CONFIG = {
 
   crawlerWorkers: parsePositiveInt(process.env.CRAWLER_WORKERS, 5, 'CRAWLER_WORKERS'),
   playwrightWorkers: parsePositiveInt(process.env.PLAYWRIGHT_WORKERS, 2, 'PLAYWRIGHT_WORKERS'),
+  playwrightConcurrentPages: parsePositiveInt(process.env.PLAYWRIGHT_CONCURRENT_PAGES, 2, 'PLAYWRIGHT_CONCURRENT_PAGES'),
 
   domainDelayMs: parsePositiveInt(process.env.DOMAIN_DELAY_MS, 200, 'DOMAIN_DELAY_MS'),
   globalRps: parsePositiveInt(process.env.GLOBAL_RPS, 10, 'GLOBAL_RPS'),

@@ -8,7 +8,16 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "load-seeds": "ts-node src/scripts/load-seeds.ts",
-    "reindex": "ts-node src/scripts/reindex-cron.ts"
+    "reindex": "ts-node src/scripts/reindex-cron.ts",
+    "stats": "ts-node src/scripts/stats.ts",
+    "stats:indexed": "ts-node src/scripts/stats.ts indexed",
+    "stats:queues": "ts-node src/scripts/stats.ts queues",
+    "stats:domains": "ts-node src/scripts/stats.ts domains",
+    "stats:recent": "ts-node src/scripts/stats.ts recent",
+    "stats:speed": "ts-node src/scripts/stats.ts speed",
+    "stats:content-type": "ts-node src/scripts/stats.ts content-type",
+    "stats:size": "ts-node src/scripts/stats.ts size",
+    "reset": "ts-node src/scripts/reset.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.11.0",

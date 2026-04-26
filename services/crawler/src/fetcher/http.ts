@@ -158,8 +158,6 @@ export async function fetchHtml(url: string): Promise<HttpFetchResult> {
 
     logger.debug('HTTP response', { url, statusCode, contentLength: headers['content-length'], contentEncoding: headers['content-encoding'] });
 
-    clearTimeout(timeoutId);
-
     const contentType = headers['content-type'] as string || '';
     if (!contentType.includes('text/html')) {
       throw new Error(`Not HTML content: ${contentType}`);

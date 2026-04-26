@@ -7,23 +7,11 @@ import { CrawlJob } from '../types';
 const PLAYWRIGHT_QUEUE_KEY = 'playwright:queue';
 const MAX_QUEUE_LENGTH = 5000;
 const IDLE_TIMEOUT_MS = 60000;
+const QUEUE_PER_WORKER = 20;
 
 let currentWorkerCount = 0;
 let lastActivityTime = Date.now();
 let monitorInterval: NodeJS.Timeout | null = null;
-
-interface SpawnConfig {
-  minQueue: number;
-  workers: number;
-}
-
-const SPAWN_CONFIG: SpawnConfig[] = [
-  { minQueue: 0, workers: 0 },
-  { minQueue: 1, workers: 1 },
-  { minQueue: 10, workers: 2 },
-  { minQueue: 50, workers: 3 },
-  { minQueue: 100, workers: CONFIG.playwrightWorkers },
-];
 
 export async function ensurePlaywrightWorkers(): Promise<void> {
   const queueLength = await redis.llen(PLAYWRIGHT_QUEUE_KEY);
@@ -42,12 +30,10 @@ export async function ensurePlaywrightWorkers(): Promise<void> {
 
   lastActivityTime = Date.now();
 
-  let neededWorkers = 0;
-  for (const config of SPAWN_CONFIG) {
-    if (queueLength >= config.minQueue) {
-      neededWorkers = config.workers;
-    }
-  }
+  const neededWorkers = Math.min(
+    CONFIG.playwrightWorkers,
+    Math.ceil(queueLength / QUEUE_PER_WORKER)
+  );
 
   if (neededWorkers > currentWorkerCount) {
     const toStart = neededWorkers - currentWorkerCount;
