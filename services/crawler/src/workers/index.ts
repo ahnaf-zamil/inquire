@@ -4,6 +4,7 @@ import { startCrawlerWorkers, stopCrawlerWorkers } from './crawler';
 import { startPlaywrightWorkers, stopPlaywrightWorkers } from './playwright';
 import { startPlaywrightManager, stopPlaywrightManager } from './playwright-manager';
 import { startReindexWorker } from './reindex';
+import { startRetryProcessor, stopRetryProcessor } from './retry-processor';
 import { redis } from '../queue';
 
 let running = false;
@@ -23,6 +24,7 @@ export async function startAllWorkers(): Promise<void> {
   await Promise.all([
     startCrawlerWorkers(CONFIG.crawlerWorkers),
     startReindexWorker(),
+    startRetryProcessor(),
   ]);
 
   startPlaywrightManager();
@@ -41,6 +43,7 @@ export async function stopAllWorkers(): Promise<void> {
   stopPlaywrightManager();
   await stopPlaywrightWorkers();
   await stopCrawlerWorkers();
+  await stopRetryProcessor();
 
   await redis.quit();
   logger.info('Redis connection closed');

@@ -64,4 +64,13 @@ export const CONFIG = {
   sitemapMaxConcurrent: parsePositiveInt(process.env.SITEMAP_MAX_CONCURRENT, 3, 'SITEMAP_MAX_CONCURRENT'),
   sitemapTimeout: parsePositiveInt(process.env.SITEMAP_TIMEOUT, 10000, 'SITEMAP_TIMEOUT'),
   sitemapMaxDepth: parsePositiveInt(process.env.SITEMAP_MAX_DEPTH, 3, 'SITEMAP_MAX_DEPTH'),
+
+  robotsEnabled: process.env.ROBOTS_ENABLED !== 'false',
+  robotsCacheTtl: parsePositiveInt(process.env.ROBOTS_CACHE_TTL, 3600000, 'ROBOTS_CACHE_TTL'),
+
+  maxRetries: parsePositiveInt(process.env.MAX_RETRIES, 3, 'MAX_RETRIES'),
+  retryDelays: (process.env.RETRY_DELAYS || '300000,600000,1200000').split(',').map(Number),
+
+  circuitFailureThreshold: parsePositiveInt(process.env.CIRCUIT_FAILURE_THRESHOLD, 5, 'CIRCUIT_FAILURE_THRESHOLD'),
+  circuitResetTimeout: parsePositiveInt(process.env.CIRCUIT_RESET_TIMEOUT, 30000, 'CIRCUIT_RESET_TIMEOUT'),
 };

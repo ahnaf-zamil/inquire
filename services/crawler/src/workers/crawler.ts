@@ -13,6 +13,8 @@ import { withRetry } from '../utils/retry';
 import { pushToPlaywrightQueue } from './playwright-manager';
 import { redis } from '../queue';
 import { fetchSitemapUrls } from '../fetcher/sitemap';
+import { ensureRobotsFetched, isUrlAllowed } from '../fetcher/robots';
+import { pushToRetryQueue, RetryJob } from '../queue/retry';
 
 let crawlerWorkers: Promise<void>[] = [];
 let stopping = false;
@@ -111,6 +113,30 @@ async function runCrawlerWorker(workerId: string): Promise<void> {
   logger.info('Crawler worker stopped', { workerId });
 }
 
+async function handleFetchError(url: string, domain: string, error: Error, isRetry: boolean): Promise<void> {
+  const message = error.message || '';
+  const is404 = message.includes('404') || message.includes('Not Found');
+  const is410 = message.includes('410') || message.includes('Gone');
+  const is503 = message.includes('503') || message.includes('Service Unavailable');
+
+  if (is404 || is410 || is503) {
+    await removeFromIndexed(url);
+    logger.warn('Dead link removed', { url, error: error.message });
+    return;
+  }
+
+  if (!isRetry) {
+    const job: RetryJob = {
+      url,
+      domain,
+      attempt: 0,
+      enqueuedAt: Date.now() + CONFIG.retryDelays[0],
+    };
+    await pushToRetryQueue(job);
+    logger.warn('Fetch failed, queued for retry', { url, error: error.message });
+  }
+}
+
 async function processCrawlJob(workerId: string, job: CrawlJob): Promise<void> {
   const normalizedUrl = normalizeUrl(job.url);
   if (!normalizedUrl) {
@@ -129,6 +155,14 @@ async function processCrawlJob(workerId: string, job: CrawlJob): Promise<void> {
     return;
   }
 
+  if (CONFIG.robotsEnabled) {
+    await ensureRobotsFetched(domain);
+    if (!isUrlAllowed(normalizedUrl, domain)) {
+      logger.debug('URL disallowed by robots.txt, skipping', { url: normalizedUrl });
+      return;
+    }
+  }
+
   await checkGlobalRateLimit();
   
   if (CONFIG.domainDelayMs > 0) {
@@ -142,10 +176,16 @@ async function processCrawlJob(workerId: string, job: CrawlJob): Promise<void> {
     return;
   }
 
-const fetchResult = await withRetry(
-    () => fetchUrl(normalizedUrl),
-    { maxRetries: 3, baseDelay: 1000 }
-  );
+  let fetchResult;
+  try {
+    fetchResult = await withRetry(
+      () => fetchUrl(normalizedUrl),
+      { maxRetries: 3, baseDelay: 1000 }
+    );
+  } catch (fetchError) {
+    await handleFetchError(normalizedUrl, domain, fetchError as Error, job.source === 'reindex');
+    return;
+  }
 
   logger.debug('Fetch result', { url: normalizedUrl, contentType: fetchResult.contentType, htmlLength: fetchResult.html.length });
 
