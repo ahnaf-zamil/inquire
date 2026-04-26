@@ -1,9 +1,17 @@
 import * as cheerio from 'cheerio';
+import { franc } from 'franc-min';
 import { ExtractedContent } from '../types';
 import { extractLinks } from './links';
 import { extractStructuredContent } from './content';
 import { extractMetadata } from './metadata';
 import { computeContentHash } from '../utils/hash';
+
+function detectLanguage(text: string): string {
+  if (text.length < 20) return 'und';
+  const sample = text.substring(0, 500);
+  const lang = franc(sample, { minLength: 10 });
+  return lang || 'und';
+}
 
 export function extractAll(html: string, baseUrl: string): {
   content: ExtractedContent;
@@ -27,6 +35,7 @@ export function extractAll(html: string, baseUrl: string): {
 
   const wordCount = fullText.split(/\s+/).filter(w => w.length > 0).length;
   const contentHash = computeContentHash(fullText);
+  const language = detectLanguage(fullText);
 
   content.fullText = fullText;
 
@@ -36,6 +45,7 @@ export function extractAll(html: string, baseUrl: string): {
     metadata,
     wordCount,
     contentHash,
+    language,
   };
 
   const links = extractLinks($, baseUrl);

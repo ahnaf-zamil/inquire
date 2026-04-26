@@ -32,6 +32,7 @@ export interface ExtractedContent {
   };
   wordCount: number;
   contentHash: string;
+  language?: string;
 }
 
 export interface CrawlStats {
@@ -71,4 +72,5 @@ export interface PageDocument {
   lastIndexed: number;
   updatedAt: number;
   contentHash: string;
+  title_autocomplete?: string;
 }

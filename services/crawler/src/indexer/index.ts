@@ -30,45 +30,91 @@ export async function ensureIndex(): Promise<void> {
         settings: {
           number_of_shards: 1,
           number_of_replicas: 0,
-          refresh_interval: '5s',
+          refresh_interval: '1s',
+          analysis: {
+            analyzer: {
+              search_analyzer: {
+                type: 'custom',
+                tokenizer: 'standard',
+                filter: ['lowercase', 'stemmer', 'stop']
+              },
+              autocomplete: {
+                type: 'custom',
+                tokenizer: 'edge_ngram_tokenizer',
+                filter: ['lowercase']
+              }
+            },
+            tokenizer: {
+              edge_ngram_tokenizer: {
+                type: 'edge_ngram',
+                min_gram: 2,
+                max_gram: 10,
+                token_chars: ['letter', 'digit']
+              }
+            },
+            filter: {
+              stemmer: {
+                type: 'stemmer',
+                language: 'english'
+              }
+            }
+          }
         },
         mappings: {
           properties: {
             url: { type: 'keyword' },
             domain: { type: 'keyword' },
-            title: {
+
+            all_text: {
               type: 'text',
               analyzer: 'standard',
-              fields: { keyword: { type: 'keyword' } },
+              search_analyzer: 'search_analyzer'
             },
+
+            title: {
+              type: 'text',
+              analyzer: 'search_analyzer',
+              copy_to: 'all_text',
+              fields: { keyword: { type: 'keyword' } }
+            },
+
+            title_autocomplete: {
+              type: 'text',
+              analyzer: 'autocomplete'
+            },
+
             content: {
               properties: {
-                h1: { type: 'text', analyzer: 'standard' },
-                h2: { type: 'text', analyzer: 'standard' },
-                h3: { type: 'text', analyzer: 'standard' },
-                h4: { type: 'text', analyzer: 'standard' },
-                h5: { type: 'text', analyzer: 'standard' },
-                h6: { type: 'text', analyzer: 'standard' },
-                paragraphs: { type: 'text', analyzer: 'standard' },
-                fullText: { type: 'text', analyzer: 'standard' },
-              },
+                h1: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                h2: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                h3: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                h4: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                h5: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                h6: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                paragraphs: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+                fullText: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' }
+              }
             },
-            metaDescription: { type: 'text' },
+
+            metaDescription: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
             metaKeywords: { type: 'keyword' },
-            ogTitle: { type: 'text' },
-            ogDescription: { type: 'text' },
+            ogTitle: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
+            ogDescription: { type: 'text', analyzer: 'search_analyzer', copy_to: 'all_text' },
             ogImage: { type: 'keyword' },
+
             depth: { type: 'integer' },
             contentType: { type: 'keyword' },
             wordCount: { type: 'integer' },
             language: { type: 'keyword' },
+
             firstIndexed: { type: 'date' },
             lastIndexed: { type: 'date' },
             updatedAt: { type: 'date' },
-            contentHash: { type: 'keyword' },
-          },
-        },
-      },
+
+            contentHash: { type: 'keyword' }
+          }
+        }
+      }
     });
     logger.info('Created Elasticsearch index', { index: CONFIG.esIndex });
   }
