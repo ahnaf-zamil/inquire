@@ -73,3 +73,15 @@ export async function getTotalPages(): Promise<number> {
   });
   return result.count;
 }
+
+export async function touchPage(url: string): Promise<void> {
+  const now = Date.now();
+  await esClient.update({
+    index: CONFIG.esIndex,
+    id: url,
+    doc: {
+      lastIndexed: now,
+      updatedAt: now,
+    },
+  });
+}

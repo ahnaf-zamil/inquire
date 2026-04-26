@@ -58,4 +58,10 @@ export const CONFIG = {
   
   playwrightHeadless: process.env.PLAYWRIGHT_HEADLESS !== 'false',
   playwrightProxy: process.env.PLAYWRIGHT_PROXY,
+
+  sitemapEnabled: process.env.SITEMAP_ENABLED !== 'false',
+  sitemapMaxUrlsPerDomain: parsePositiveInt(process.env.SITEMAP_MAX_URLS_PER_DOMAIN, 5000, 'SITEMAP_MAX_URLS_PER_DOMAIN'),
+  sitemapMaxConcurrent: parsePositiveInt(process.env.SITEMAP_MAX_CONCURRENT, 3, 'SITEMAP_MAX_CONCURRENT'),
+  sitemapTimeout: parsePositiveInt(process.env.SITEMAP_TIMEOUT, 10000, 'SITEMAP_TIMEOUT'),
+  sitemapMaxDepth: parsePositiveInt(process.env.SITEMAP_MAX_DEPTH, 3, 'SITEMAP_MAX_DEPTH'),
 };

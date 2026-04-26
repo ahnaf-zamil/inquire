@@ -6,16 +6,35 @@ import { tryMarkUrlIndexed, getIndexedUrlCount, removeFromIndexed } from '../que
 import { checkDomainRateLimit, checkGlobalRateLimit } from '../queue/rate-limit';
 import { fetchUrl } from '../fetcher';
 import { extractAll } from '../extractor';
-import { indexPage, getPage } from '../indexer';
+import { indexPage, getPage, touchPage } from '../indexer';
 import { normalizeUrl, getDomain, isSafeUrl } from '../utils/url';
 import { checkMemoryUsage } from '../utils/memory';
 import { withRetry } from '../utils/retry';
 import { pushToPlaywrightQueue } from './playwright-manager';
 import { redis } from '../queue';
+import { fetchSitemapUrls } from '../fetcher/sitemap';
 
 let crawlerWorkers: Promise<void>[] = [];
 let stopping = false;
 let lastStatsLog = 0;
+
+async function discoverAndQueueSitemaps(domain: string): Promise<void> {
+  try {
+    const sitemapUrls = await fetchSitemapUrls(domain);
+    if (sitemapUrls.length > 0) {
+      const jobs: CrawlJob[] = sitemapUrls.map(url => ({
+        url,
+        depth: 1,
+        source: 'link',
+        enqueuedAt: Date.now(),
+      }));
+      const result = await batchPushToCrawlQueue(jobs);
+      logger.info('Inline sitemap discovery', { domain, urlCount: sitemapUrls.length, queued: result.queued });
+    }
+  } catch (error) {
+    logger.warn('Inline sitemap discovery failed', { domain, error });
+  }
+}
 
 export async function startCrawlerWorkers(count: number): Promise<void> {
   stopping = false;
@@ -192,12 +211,31 @@ const fetchResult = await withRetry(
     contentHash: content.contentHash,
   };
 
-  await withRetry(
-    () => indexPage(document),
-    { maxRetries: 3, baseDelay: 2000 }
-  );
+  const isReindex = job.source === 'reindex';
+  const contentUnchanged = isReindex && existingDoc && existingDoc.contentHash === content.contentHash;
 
-  logger.info('Indexed page', { url: normalizedUrl, wordCount: content.wordCount, linksCount: links.length });
+  if (contentUnchanged) {
+    await withRetry(
+      () => touchPage(normalizedUrl),
+      { maxRetries: 3, baseDelay: 2000 }
+    );
+    logger.info('Content unchanged, touched page', { url: normalizedUrl });
+  } else {
+    await withRetry(
+      () => indexPage(document),
+      { maxRetries: 3, baseDelay: 2000 }
+    );
+    logger.info('Indexed page', { url: normalizedUrl, wordCount: content.wordCount, linksCount: links.length });
+  }
+
+  if (CONFIG.sitemapEnabled) {
+    const sitemapsDiscoveredKey = 'sitemaps:discovered';
+    const alreadyDiscovered = await redis.sismember(sitemapsDiscoveredKey, domain);
+    if (!alreadyDiscovered) {
+      await redis.sadd(sitemapsDiscoveredKey, domain);
+      discoverAndQueueSitemaps(domain);
+    }
+  }
 
   if (job.depth < CONFIG.maxDepth && links.length > 0) {
     const batchResult = await batchPushToCrawlQueue(

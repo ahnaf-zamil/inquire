@@ -3,9 +3,10 @@ import path from 'path';
 import { CrawlJob } from '../types';
 import { logger } from '../utils/logger';
 import { redis } from '../queue';
-import { pushToCrawlQueue } from '../queue/crawl';
-import { normalizeUrl } from '../utils/url';
+import { pushToCrawlQueue, batchPushToCrawlQueue } from '../queue/crawl';
+import { normalizeUrl, getDomain } from '../utils/url';
 import { computeShortHash } from '../utils/hash';
+import { fetchSitemapUrls } from '../fetcher/sitemap';
 
 const SEED_LOADED_KEY = 'seed:loaded:seeds.txt';
 
@@ -45,6 +46,26 @@ async function loadSeeds(): Promise<void> {
       enqueuedAt: Date.now(),
     };
     await pushToCrawlQueue(job);
+  }
+
+  const domains = new Set(urls.map(url => {
+    const normalized = normalizeUrl(url);
+    return normalized ? getDomain(normalized) : null;
+  }).filter(Boolean) as string[]);
+
+  for (const domain of domains) {
+    logger.info('Discovering sitemaps for domain', { domain });
+    const sitemapUrls = await fetchSitemapUrls(domain);
+    if (sitemapUrls.length > 0) {
+      const jobs: CrawlJob[] = sitemapUrls.map(url => ({
+        url,
+        depth: 0,
+        source: 'seed',
+        enqueuedAt: Date.now(),
+      }));
+      const result = await batchPushToCrawlQueue(jobs);
+      logger.info('Sitemap URLs queued', { domain, urlCount: sitemapUrls.length, queued: result.queued });
+    }
   }
 
   await redis.set(SEED_LOADED_KEY, fileHash);
