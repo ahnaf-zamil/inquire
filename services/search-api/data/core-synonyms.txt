@@ -1,0 +1,465 @@
+# Core Synonyms - Bidirectional mappings
+# Format: term1, term2, term3 (all bidirectional)
+# Lines starting with # are comments
+
+# Tech
+javascript, js, jsx
+typescript, ts
+react, reactjs, react.js
+vue, vuejs, vue.js
+angular, ng
+node, nodejs, node.js
+python, py
+golang, go
+rust, rs
+java, jvm
+csharp, c#, c++
+php, php
+ruby, rb
+swift, swiftui
+kotlin, kt
+
+# Web
+website, web site, web
+webpage, web page
+download, dl
+upload, ul
+login, log in, signin, sign in
+logout, log out, signout, sign out
+
+# Content
+book, ebook, e-book, e book, books
+document, doc, docs
+video, videos, vid
+image, images, img, pic, pictures
+audio, sound, mp3
+article, articles
+tutorial, tutorials, guide, guides
+course, courses
+lesson, lessons
+
+# Actions
+search, find, lookup, searching
+browse, surf
+purchase, buy, order
+subscribe, sign up, register
+download, get, grab
+install, setup, set up
+
+# Tech terms
+api, apis, endpoint, endpoints
+database, db, databases
+server, svc, service
+client, frontend, front-end
+config, configuration, cfg
+deploy, deployment, release
+bug, issue, defect, error
+fix, patch, repair
+code, coding, program, programming
+dev, developer, development
+ops, operations
+stack, technology stack, tech stack
+
+# General
+learn, learning, learn
+teach, teaching, tutorial
+read, reading, book
+write, writing, article
+build, building, create
+start, beginning, begin
+end, ending, finish
+house, home, residence, dwelling, abode
+apartment, flat, unit, condo
+room, chamber, space, area
+building, structure, construction, facility
+office, workplace, workspace, jobsite
+shop, store, outlet, retail
+car, automobile, vehicle, auto
+bike, bicycle, cycle
+bus, coach, transit, shuttle
+train, railway, rail, metro
+plane, airplane, aircraft, jet
+boat, ship, vessel, ferry
+road, street, avenue, lane
+city, town, municipality, urban area
+village, rural area, countryside
+country, nation, state
+region, area, zone, district
+world, earth, globe
+person, individual, human, user
+people, humans, population, crowd
+man, male, guy
+woman, female, lady
+child, kid, youngster
+family, household, relatives
+friend, buddy, pal
+group, team, squad
+company, business, firm, enterprise
+organization, org, institution
+job, work, employment, occupation
+career, profession, vocation
+money, cash, currency, funds
+price, cost, fee, charge
+value, worth, price
+time, moment, instant
+day, date, daytime
+night, evening, nighttime
+year, annum
+week, weekday, workweek
+today, now, present
+tomorrow, next day
+yesterday, previous day
+big, large, huge, enormous, massive
+small, little, tiny, miniature, compact
+fast, quick, rapid, speedy, swift
+slow, sluggish, gradual
+good, great, excellent, nice
+bad, poor, awful, terrible
+new, fresh, recent
+old, aged, ancient
+easy, simple, effortless
+hard, difficult, tough
+happy, joyful, glad
+sad, unhappy, sorrowful
+angry, mad, upset
+calm, peaceful, relaxed
+hot, warm
+cold, cool, chilly
+bright, luminous, shiny
+dark, dim, gloomy
+clean, tidy, neat
+dirty, messy, unclean
+strong, powerful, sturdy
+weak, fragile, frail
+buy, purchase, order, acquire, get
+sell, vend, trade
+pay, compensate, remit
+help, assist, support, aid
+use, utilize, employ
+make, create, build
+do, perform, execute
+run, operate, execute
+start, begin, initiate
+stop, end, halt
+open, unlock
+close, shut
+find, locate, discover
+search, lookup, seek
+look, view, see
+watch, observe
+listen, hear
+talk, speak, communicate
+write, record, note
+read, scan, browse
+send, transmit, deliver
+receive, get, accept
+give, provide, offer
+take, grab, pick
+move, shift, transfer
+change, modify, alter
+fix, repair, mend
+break, damage
+keep, retain, hold
+leave, exit, depart
+enter, go in
+return, come back
+wait, pause, delay
+choose, select, pick
+need, require
+want, desire
+like, enjoy
+love, adore
+hate, dislike
+think, consider
+know, understand
+learn, study
+teach, instruct
+build, construct, assemble
+destroy, demolish
+grow, expand
+reduce, decrease
+increase, raise, boost
+improve, enhance
+fail, break, collapse
+win, succeed
+lose, fail
+plan, schedule, organize
+manage, handle, control
+lead, guide
+follow, track
+support, back
+attack, assault
+protect, defend
+create, generate, produce
+share, distribute
+connect, link
+disconnect, unlink
+measure, gauge
+compare, contrast
+test, evaluate
+record, log
+save, store
+delete, remove
+update, upgrade
+download, get, fetch
+upload, send, push
+
+# Technology/Programming
+
+code, coding, programming, source
+script, code, program
+app, application, software
+program, software, tool
+system, platform, solution
+framework, library, sdk
+react, reactjs
+angular, angularjs
+vue, vuejs
+node, nodejs
+javascript, js, javscript
+typescript, ts
+python, py
+java, jvm
+csharp, c#
+cpp, c++
+go, golang
+rust, rs
+php, hypertext preprocessor
+ruby, rb
+swift, ios
+kotlin, android
+html, markup
+css, stylesheet
+json, data format
+xml, markup
+yaml, yml
+api, endpoint, webservice
+rest, rest api
+graphql, gql
+request, call, query
+response, reply
+server, host, machine, instance, vm
+client, frontend
+backend, server-side
+frontend, front-end, client-side
+database, db, datastore
+sql, relational db
+nosql, non relational db
+table, collection
+row, record
+column, field
+index, key
+query, search
+cache, caching
+memory, ram
+storage, disk
+file, blob
+object, entity
+class, type
+function, method, procedure
+variable, var
+constant, const
+loop, iteration
+condition, if statement
+error, bug, issue, defect
+exception, error
+log, logging
+debug, troubleshoot
+fix, patch, resolve
+build, compile
+run, execute
+deploy, release, ship, publish
+version, release
+branch, git branch
+commit, change
+merge, integrate
+pull request, pr
+repo, repository
+clone, copy
+fork, branch
+ci, continuous integration
+cd, continuous deployment
+pipeline, workflow
+container, docker
+kubernetes, k8s
+vm, virtual machine
+cloud, hosting
+aws, amazon web services
+gcp, google cloud
+azure, microsoft azure
+serverless, lambda
+auth, authentication
+login, signin
+logout, signout
+permission, access
+role, user role
+token, jwt
+encryption, crypto
+hash, checksum
+api key, token
+endpoint, route
+url, uri
+domain, hostname
+dns, domain name system
+http, protocol
+https, secure http
+tcp, transmission protocol
+udp, datagram
+socket, connection
+request, http request
+response, http response
+status code, http code
+200, ok
+404, not found
+500, server error
+config, configuration, cfg, settings
+env, environment
+prod, production
+dev, development
+staging, test
+test, unit test
+integration test, e2e
+mock, stub
+assert, check
+lint, format
+format, prettify
+bundle, package
+npm, node package manager
+yarn, package manager
+pnpm, package manager
+install, setup
+uninstall, remove
+upgrade, update
+downgrade, rollback
+monitor, observe
+metrics, stats
+alert, notification
+queue, message queue
+stream, data stream
+event, trigger
+cron, scheduler
+
+# Web/Internet
+
+website, web site, site, webpage, page
+webapp, web application
+portal, site
+homepage, home page
+landing page, landing
+url, link, address
+domain, site name
+subdomain, host
+browser, chrome, firefox, safari, edge
+tab, browser tab
+window, browser window
+search, web search
+engine, search engine
+google, search
+bing, search
+yahoo, search
+duckduckgo, search
+download, dl, get, fetch, retrieve
+upload, send, push
+stream, play
+buffer, preload
+login, log in, signin, sign in, authenticate
+logout, log out, signout, sign out
+register, signup, sign up
+account, profile
+user, member
+password, passcode
+username, handle
+email, mail
+inbox, mailbox
+spam, junk
+notification, alert
+message, msg
+chat, conversation
+post, publish
+comment, reply
+like, favorite
+share, repost
+follow, subscribe
+unfollow, unsubscribe
+feed, timeline
+story, update
+video call, call
+voice call, call
+link, hyperlink
+embed, iframe
+ads, advertisement
+banner, ad
+popup, modal
+cookie, tracking
+session, login session
+cache, browser cache
+history, browsing history
+bookmark, favorite
+download manager, downloader
+upload form, uploader
+file upload, upload
+cdn, content delivery network
+latency, delay
+bandwidth, throughput
+wifi, wireless
+ethernet, lan
+ip, ip address
+vpn, proxy
+firewall, security
+antivirus, security
+
+# Content/Media
+
+book, ebook, e-book, publication, novel
+magazine, journal
+article, post, writeup
+blog, weblog
+news, report
+story, narrative
+chapter, section
+page, sheet
+document, doc, file, paper, report
+pdf, document
+docx, word file
+spreadsheet, sheet, excel
+presentation, slides, ppt
+text, content
+note, memo
+video, clip, recording, film, movie
+short, reel
+stream, live stream
+broadcast, live
+audio, sound, recording
+music, song, track
+podcast, audio show
+voice, speech
+image, picture, photo, img, graphic
+photo, photograph
+screenshot, screen capture
+icon, symbol
+logo, brand mark
+banner, image
+thumbnail, preview
+gallery, album
+design, artwork
+illustration, drawing
+animation, motion
+gif, animated image
+file, asset
+media, content
+download, file
+upload, file
+render, export
+edit, modify
+crop, trim
+resize, scale
+compress, reduce size
+convert, transform
+format, file format
+mp4, video format
+mp3, audio format
+png, image format
+jpg, jpeg, image format
+svg, vector image
+webp, image format
+

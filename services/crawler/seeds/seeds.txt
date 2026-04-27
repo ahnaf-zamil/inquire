@@ -1,27 +1,8 @@
 
 
-https://dev.to/
 https://news.ycombinator.com/
 https://old.reddit.com/
 https://www.aljazeera.com/
 https://www.bbc.com/news
-# React
-https://react.dev
-
 https://www.gutenberg.org
-# Vue
-https://vuejs.org
-
-# Angular
-https://angular.io
-
-# Svelte
-https://svelte.dev
-
-# Next.js (React framework)
-https://nextjs.org
-# Other JS-heavy
-
 https://en.wikipedia.org/wiki/Main_Page
-https://github.com
-https://gitlab.com

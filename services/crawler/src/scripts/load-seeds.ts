@@ -53,9 +53,16 @@ async function loadSeeds(): Promise<void> {
     return normalized ? getDomain(normalized) : null;
   }).filter(Boolean) as string[]);
 
-  for (const domain of domains) {
-    logger.info('Discovering sitemaps for domain', { domain });
-    const sitemapUrls = await fetchSitemapUrls(domain);
+  const allSitemapJobs: CrawlJob[] = [];
+  const sitemapResults = await Promise.all(
+    Array.from(domains).map(async (domain) => {
+      logger.info('Discovering sitemaps for domain', { domain });
+      const sitemapUrls = await fetchSitemapUrls(domain);
+      return { domain, sitemapUrls };
+    })
+  );
+
+  for (const { domain, sitemapUrls } of sitemapResults) {
     if (sitemapUrls.length > 0) {
       const jobs: CrawlJob[] = sitemapUrls.map(url => ({
         url,
@@ -63,9 +70,14 @@ async function loadSeeds(): Promise<void> {
         source: 'seed',
         enqueuedAt: Date.now(),
       }));
-      const result = await batchPushToCrawlQueue(jobs);
-      logger.info('Sitemap URLs queued', { domain, urlCount: sitemapUrls.length, queued: result.queued });
+      allSitemapJobs.push(...jobs);
+      logger.info('Sitemap URLs discovered', { domain, urlCount: sitemapUrls.length });
     }
+  }
+
+  if (allSitemapJobs.length > 0) {
+    const result = await batchPushToCrawlQueue(allSitemapJobs);
+    logger.info('All sitemap URLs queued', { totalDiscovered: allSitemapJobs.length, queued: result.queued, skipped: result.skipped });
   }
 
   await redis.set(SEED_LOADED_KEY, fileHash);

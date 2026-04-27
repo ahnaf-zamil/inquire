@@ -1,5 +1,6 @@
 import { Client } from '@elastic/elasticsearch';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { preprocessQuery, buildExpandedQuery } from '../preprocessor';
 
 const esClient = new Client({
   node: process.env.ES_HOST || 'http://localhost:9200',
@@ -24,6 +25,7 @@ interface SearchResult {
     title: string;
     domain: string;
     description: string;
+    highlights: string[];
     contentType: string;
     wordCount: number;
     lastIndexed: string;
@@ -41,16 +43,30 @@ export async function searchRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'Query parameter "q" is required' });
     }
 
-    const must = [
+    const expanded = preprocessQuery(q);
+    const expandedQuery = buildExpandedQuery(q, expanded);
+    const isPhrase = q.match(/"([^"]+)"/);
+    const phraseQuery = isPhrase ? isPhrase[1] : null;
+
+    const must: any[] = [
       {
         multi_match: {
-          query: q,
+          query: expandedQuery,
           fields: ['title^10', 'all_text', 'metaDescription^3', 'ogTitle^5'],
           fuzziness: 'AUTO',
-          prefix_length: 2
+          prefix_length: 2,
+          analyzer: 'search_analyzer'
         }
       }
     ];
+
+    if (phraseQuery) {
+      must.push({
+        match_phrase: {
+          title: { query: phraseQuery, boost: 5 }
+        }
+      });
+    }
 
     const filter = [];
     if (domain) filter.push({ term: { domain } });
@@ -70,10 +86,26 @@ export async function searchRoutes(fastify: FastifyInstance) {
       const response = await esClient.search({
         index: ES_INDEX,
         query: {
-          bool: {
-            must,
-            filter: filter.length > 0 ? filter : undefined
+          function_score: {
+            query: {
+              bool: {
+                must,
+                filter: filter.length > 0 ? filter : undefined
+              }
+            },
+            functions: [
+              { gauss: { lastIndexed: { scale: '7d', decay: 0.5 } } },
+              { field_value_factor: { field: 'wordCount', factor: 0.1, missing: 0 } }
+            ],
+            boost_mode: 'sum'
           }
+        },
+        highlight: {
+          fields: {
+            all_text: { fragment_size: 150, number_of_fragments: 3 }
+          },
+          pre_tags: ['<em>'],
+          post_tags: ['</em>']
         },
         from,
         size: limit,
@@ -85,11 +117,13 @@ export async function searchRoutes(fastify: FastifyInstance) {
 
       const results = response.hits.hits.map(hit => {
         const source = hit._source as any;
+        const highlights = hit.highlight;
         return {
           url: source.url,
           title: source.title,
           domain: source.domain,
-          description: source.metaDescription || source.ogDescription || source.content?.fullText?.substring(0, 200) || '',
+          description: highlights?.all_text?.join('...') || source.metaDescription || source.ogDescription || source.content?.fullText?.substring(0, 200) || '',
+          highlights: highlights?.all_text || [],
           contentType: source.contentType,
           wordCount: source.wordCount,
           lastIndexed: source.lastIndexed

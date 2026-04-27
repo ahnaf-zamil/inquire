@@ -6,7 +6,9 @@
   ],
   "scripts": {
     "dev:crawler": "cd services/crawler && npm run dev",
+    "dev:search": "cd services/search-api && npm run dev",
     "build:crawler": "cd services/crawler && npm run build",
+    "build:search": "cd services/search-api && npm run build",
     "load-seeds": "cd services/crawler && npm run load-seeds",
     "reindex": "cd services/crawler && npm run reindex"
   },

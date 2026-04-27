@@ -36,7 +36,7 @@ export async function ensureIndex(): Promise<void> {
               search_analyzer: {
                 type: 'custom',
                 tokenizer: 'standard',
-                filter: ['lowercase', 'stemmer', 'stop']
+                filter: ['lowercase', 'stemmer', 'stop', 'my_synonym_graph', 'word_delimiter']
               },
               autocomplete: {
                 type: 'custom',
@@ -56,6 +56,47 @@ export async function ensureIndex(): Promise<void> {
               stemmer: {
                 type: 'stemmer',
                 language: 'english'
+              },
+              my_synonym_graph: {
+                type: 'synonym_graph',
+                synonyms: [
+                  'js, javascript',
+                  'react, reactjs',
+                  'ts, typescript',
+                  'node, nodejs, node.js',
+                  'frontend, front-end, front end',
+                  'backend, back-end, back end',
+                  'css, styles, styling',
+                  'html, markup',
+                  'api, apis, endpoint, endpoints',
+                  'db, database, databases',
+                  'book, ebook, e-book, e book, books',
+                  'document, doc, docs',
+                  'video, videos, vid',
+                  'image, images, img, pic, pictures',
+                  'website, web site, web',
+                  'webpage, web page',
+                  'download, dl',
+                  'login, log in, signin, sign in',
+                  'logout, log out, signout, sign out',
+                  'search, find, lookup',
+                  'fix, patch, repair',
+                  'bug, issue, defect, error',
+                  'config, configuration, cfg',
+                  'deploy, deployment, release',
+                  'server, service, svc',
+                  'client, frontend',
+                  'python, py',
+                  'golang, go',
+                  'rust, rs',
+                  'java, jvm',
+                  'csharp, c#',
+                  'vue, vuejs',
+                  'angular, ng'
+                ]
+              },
+              word_delimiter: {
+                type: 'word_delimiter_graph'
               }
             }
           }
