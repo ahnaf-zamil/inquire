@@ -108,8 +108,14 @@ export async function ensureIndex(): Promise<void> {
 
             all_text: {
               type: 'text',
-              analyzer: 'standard',
-              search_analyzer: 'search_analyzer'
+              analyzer: 'search_analyzer',
+              search_analyzer: 'search_analyzer',
+              fields: {
+                highlight: {
+                  type: 'text',
+                  analyzer: 'standard'
+                }
+              }
             },
 
             title: {

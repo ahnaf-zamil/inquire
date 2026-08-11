@@ -3,6 +3,7 @@ import { getDomain } from '../utils/url';
 
 interface RobotsCache {
   rules: string[];
+  allowRules: string[];
   crawlDelay: number;
   fetchedAt: number;
 }
@@ -46,19 +47,38 @@ export async function fetchRobotsTxt(domain: string): Promise<string | null> {
   }
 }
 
-export function parseRobotsTxt(content: string): { rules: string[]; crawlDelay: number } {
+export function parseRobotsTxt(content: string): { rules: string[]; allowRules: string[]; crawlDelay: number } {
   const lines = content.split('\n');
   const rules: string[] = [];
+  const allowRules: string[] = [];
   let crawlDelay = 0;
+  let inStarGroup = false;
 
   for (const line of lines) {
     const trimmed = line.trim().toLowerCase();
+
+    if (trimmed.startsWith('user-agent:')) {
+      const ua = trimmed.substring('user-agent:'.length).trim();
+      inStarGroup = ua === '*';
+      continue;
+    }
+
+    if (!inStarGroup) continue;
+
+    if (trimmed.startsWith('allow:')) {
+      const path = trimmed.substring('allow:'.length).trim();
+      if (path) {
+        allowRules.push(path);
+      }
+      continue;
+    }
 
     if (trimmed.startsWith('disallow:')) {
       const path = trimmed.substring('disallow:'.length).trim();
       if (path) {
         rules.push(path);
       }
+      continue;
     }
 
     if (trimmed.startsWith('crawl-delay:')) {
@@ -69,34 +89,37 @@ export function parseRobotsTxt(content: string): { rules: string[]; crawlDelay: 
     }
   }
 
-  return { rules, crawlDelay };
+  return { rules, allowRules, crawlDelay };
 }
 
 export function isUrlAllowed(url: string, domain: string): boolean {
   const cached = robotsCache.get(domain);
 
-  if (!cached || cached.rules.length === 0) {
+  if (!cached || (cached.rules.length === 0 && cached.allowRules.length === 0)) {
     return true;
   }
 
   try {
     const urlObj = new URL(url);
-    const path = urlObj.pathname || '/';
-    const fullUrl = urlObj.href;
+    const path = urlObj.pathname.toLowerCase();
+
+    for (const rule of cached.allowRules) {
+      const isExact = rule.endsWith('$');
+      const cleanRule = isExact ? rule.slice(0, -1) : rule.replace(/[?*]$/, '');
+      if (isExact ? path === cleanRule : path.startsWith(cleanRule)) {
+        return true;
+      }
+    }
 
     for (const rule of cached.rules) {
-      if (rule === '*') {
-        continue;
-      }
+      if (rule === '*') continue;
+      const isExact = rule.endsWith('$');
+      const cleanRule = isExact ? rule.slice(0, -1) : rule.replace(/[?*]$/, '');
 
-      if (rule.endsWith('$')) {
-        const exactRule = rule.slice(0, -1);
-        if (path === exactRule || fullUrl === exactRule) {
-          return false;
-        }
-      } else if (rule === '/') {
+      if (cleanRule === '/' && !isExact) {
         return false;
-      } else if (path.startsWith(rule) || fullUrl.includes(rule)) {
+      }
+      if (isExact ? path === cleanRule : path.startsWith(cleanRule)) {
         return false;
       }
     }

@@ -55,7 +55,8 @@ export async function searchRoutes(fastify: FastifyInstance) {
           fields: ['title^10', 'all_text', 'metaDescription^3', 'ogTitle^5'],
           fuzziness: 'AUTO',
           prefix_length: 2,
-          analyzer: 'search_analyzer'
+          analyzer: 'search_analyzer',
+          minimum_should_match: '2<75%'
         }
       }
     ];
@@ -64,6 +65,11 @@ export async function searchRoutes(fastify: FastifyInstance) {
       must.push({
         match_phrase: {
           title: { query: phraseQuery, boost: 5 }
+        }
+      });
+      must.push({
+        match_phrase: {
+          all_text: { query: phraseQuery, boost: 3 }
         }
       });
     }
@@ -86,23 +92,14 @@ export async function searchRoutes(fastify: FastifyInstance) {
       const response = await esClient.search({
         index: ES_INDEX,
         query: {
-          function_score: {
-            query: {
-              bool: {
-                must,
-                filter: filter.length > 0 ? filter : undefined
-              }
-            },
-            functions: [
-              { gauss: { lastIndexed: { scale: '7d', decay: 0.5 } } },
-              { field_value_factor: { field: 'wordCount', factor: 0.1, missing: 0 } }
-            ],
-            boost_mode: 'sum'
+          bool: {
+            must,
+            filter: filter.length > 0 ? filter : undefined
           }
         },
         highlight: {
           fields: {
-            all_text: { fragment_size: 150, number_of_fragments: 3 }
+            'all_text.highlight': { fragment_size: 150, number_of_fragments: 3 }
           },
           pre_tags: ['<em>'],
           post_tags: ['</em>']
@@ -122,8 +119,8 @@ export async function searchRoutes(fastify: FastifyInstance) {
           url: source.url,
           title: source.title,
           domain: source.domain,
-          description: highlights?.all_text?.join('...') || source.metaDescription || source.ogDescription || source.content?.fullText?.substring(0, 200) || '',
-          highlights: highlights?.all_text || [],
+          description: highlights?.['all_text.highlight']?.join('...') || source.metaDescription || source.ogDescription || source.content?.fullText?.substring(0, 200) || '',
+          highlights: highlights?.['all_text.highlight'] || [],
           contentType: source.contentType,
           wordCount: source.wordCount,
           lastIndexed: source.lastIndexed

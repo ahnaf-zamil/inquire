@@ -58,15 +58,17 @@ export async function pushToCrawlQueue(job: CrawlJob): Promise<boolean> {
   return true;
 }
 
+export async function pushToCrawlQueueFront(job: CrawlJob): Promise<boolean> {
+  await redis.lpush(CRAWL_QUEUE_KEY, JSON.stringify(job));
+  return true;
+}
+
 export async function popFromCrawlQueue(timeout = 5): Promise<CrawlJob | null> {
-  const result = await redis.lpop(CRAWL_QUEUE_KEY);
-  if (!result) {
-    await new Promise(resolve => setTimeout(resolve, timeout * 1000));
-    return null;
-  }
+  const result = await redis.blpop(CRAWL_QUEUE_KEY, timeout);
+  if (!result) return null;
 
   try {
-    return JSON.parse(result) as CrawlJob;
+    return JSON.parse(result[1]) as CrawlJob;
   } catch {
     return null;
   }

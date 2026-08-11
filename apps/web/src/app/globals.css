@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@font-face {
+  font-family: "ClashGrotesk";
+  src: url("/fonts/ClashGrotesk_Variable.ttf") format("truetype");
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@theme inline {
+  --font-sans: "ClashGrotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --font-heading: "ClashGrotesk", ui-sans-serif, system-ui, sans-serif;
+  --animate-cell-ripple: cell-ripple 400ms ease-out;
+}
+
+@keyframes cell-ripple {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  100% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #fff;
+  color: #1f1f1f;
+}

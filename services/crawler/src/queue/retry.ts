@@ -6,6 +6,7 @@ export interface RetryJob {
   url: string;
   domain: string;
   attempt: number;
+  maxAttempts?: number;
   enqueuedAt: number;
 }
 

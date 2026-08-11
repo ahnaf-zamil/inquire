@@ -21,7 +21,8 @@ export function detectSpaPatterns(html: string): boolean {
   // Framework-specific markers
   if (htmlLower.includes('__next_data__') ||
       htmlLower.includes('__next_rev') ||
-      htmlLower.includes('__next_build_id')) {
+      htmlLower.includes('__next_build_id') ||
+      htmlLower.includes('/_next/static')) {
     logger.debug('Detected Next.js pattern');
     return true;
   }
@@ -31,7 +32,8 @@ export function detectSpaPatterns(html: string): boolean {
     return true;
   }
 
-  if (htmlLower.includes('ng-app') || htmlLower.includes('data-vue') || htmlLower.includes('v-app')) {
+  if (htmlLower.includes('ng-app') || htmlLower.includes('data-vue') || htmlLower.includes('v-app') ||
+      htmlLower.includes('ng-version') || htmlLower.includes('_nghost') || htmlLower.includes('_ngcontent')) {
     logger.debug('Detected Vue/Angular pattern');
     return true;
   }
@@ -45,13 +47,6 @@ export function detectSpaPatterns(html: string): boolean {
   const idMatch = html.match(/id="(app|mount|root|__next)"[>\s]/i);
   if (idMatch) {
     logger.debug('Detected root id pattern', { pattern: idMatch[1] });
-    return true;
-  }
-
-  // Check for SPA bundle patterns - if there are multiple JS files from same domain, likely SPA
-  const scriptMatches = html.match(/<script[^>]+src="([^"]+)"/gi) || [];
-  if (scriptMatches.length >= 3) {
-    logger.debug('Detected SPA bundle pattern', { scriptCount: scriptMatches.length });
     return true;
   }
 

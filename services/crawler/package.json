@@ -17,7 +17,8 @@
     "stats:speed": "ts-node src/scripts/stats.ts speed",
     "stats:content-type": "ts-node src/scripts/stats.ts content-type",
     "stats:size": "ts-node src/scripts/stats.ts size",
-    "reset": "ts-node src/scripts/reset.ts"
+    "reset": "ts-node src/scripts/reset.ts",
+    "submit": "ts-node src/scripts/submit.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.11.0",

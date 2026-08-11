@@ -2,6 +2,7 @@ import { Client } from '@elastic/elasticsearch';
 import Redis from 'ioredis';
 import { config } from 'dotenv';
 import readline from 'readline';
+import { clearRedisQueues } from '../queue/reset';
 
 config();
 
@@ -37,12 +38,7 @@ async function main() {
   }
 
   console.log('\n🧹 Clearing Redis queues...');
-  await redis.del('crawl:queue');
-  await redis.del('playwright:queue');
-  await redis.del('indexed:urls');
-  await redis.del('domain:lastRequest');
-  await redis.del('crawl:semaphore');
-  await redis.del('seed:loaded:seeds.txt');
+  await clearRedisQueues(redis);
 
   console.log('🗑️  Deleting ES index...');
   try {

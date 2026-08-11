@@ -10,9 +10,12 @@
     "build:crawler": "cd services/crawler && npm run build",
     "build:search": "cd services/search-api && npm run build",
     "load-seeds": "cd services/crawler && npm run load-seeds",
-    "reindex": "cd services/crawler && npm run reindex"
+    "reindex": "cd services/crawler && npm run reindex",
+    "dev:web": "cd apps/web && bun run dev",
+    "build:web": "cd apps/web && bun run build"
   },
   "devDependencies": {
+    "shadcn": "^4.16.2",
     "typescript": "^5.0.0"
   }
 }

@@ -47,7 +47,7 @@ export const CONFIG = {
   reindexAfterHours: 24,
   reindexBatchSize: 10_000,
 
-  esIndex: parseNonEmptyString(process.env.ES_INDEX, 'pages', 'ES_INDEX'),
+  esIndex: parseNonEmptyString(process.env.ES_INDEX, 'crawled_pages', 'ES_INDEX'),
   esHost: parseNonEmptyString(process.env.ES_HOST, 'http://localhost:9200', 'ES_HOST'),
 
   redisHost: parseNonEmptyString(process.env.REDIS_HOST, 'localhost', 'REDIS_HOST'),

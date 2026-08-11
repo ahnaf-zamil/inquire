@@ -3,8 +3,14 @@ import { startAllWorkers, stopAllWorkers } from './workers';
 import { loadSeeds } from './scripts/load-seeds';
 import { ensureIndex } from './indexer';
 import { CONFIG } from './config';
+import { clearRedisQueues } from './queue/reset';
 
 async function main(): Promise<void> {
+  if (process.argv.includes('--fresh')) {
+    logger.info('Fresh mode enabled — clearing Redis queues');
+    await clearRedisQueues();
+  }
+
   logger.info('Starting crawler service', { config: CONFIG });
 
   await ensureIndex();

@@ -1,8 +1,10 @@
 export interface CrawlJob {
   url: string;
   depth: number;
-  source: 'seed' | 'link' | 'reindex';
+  source: 'seed' | 'link' | 'reindex' | 'retry';
   enqueuedAt: number;
+  attempt?: number;
+  maxAttempts?: number;
 }
 
 export interface IndexedUrl {

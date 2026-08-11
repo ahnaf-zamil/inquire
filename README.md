@@ -1,50 +1,56 @@
-# Search Engine V1
+# Search Engine
 
-A self-hosted search engine with a robust web crawler capable of indexing both static HTML and JavaScript-rendered pages.
-
-## Features
-
-- **Hybrid Crawling**: Automatic detection and handling of JavaScript-rendered pages via Playwright
-- **Structured Content Extraction**: Separates headers (h1-h6), paragraphs, and metadata for future ranking
-- **Automatic Reindexing**: 24-hour reindex cycle keeps content fresh
-- **Resource Guardrails**: Built-in limits to prevent system resource exhaustion
-- **Cross-Domain Support**: Crawl multiple domains from single seed URLs
-- **Scalable Architecture**: Worker pools for crawling and Playwright rendering
+Self-hosted web search engine with crawler, ranking API, and search UI.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     SEARCH ENGINE                            │
-│                                                              │
-│  ┌─────────────────┐    ┌─────────────────┐                │
-│  │  Crawler        │    │  API Server     │                │
-│  │  Service        │    │  (Future)       │                │
-│  │                 │    │                 │                │
-│  │  - Static HTML  │    │  - Search       │                │
-│  │  - Playwright   │    │  - Ranking      │                │
-│  │  - Extraction   │    │  - Analytics    │                │
-│  └────────┬────────┘    └─────────────────┘                │
-│           │                                                 │
-│           ▼                                                 │
-│  ┌───────────────────────────────────────────────────────┐ │
-│  │                   DATA LAYER                           │ │
-│  │  ┌─────────────┐         ┌─────────────┐             │ │
-│  │  │  Redis      │         │  Elastic-   │             │ │
-│  │  │  (Queues)   │         │  search     │             │ │
-│  │  │             │         │  (Index)    │             │ │
-│  │  └─────────────┘         └─────────────┘             │ │
-│  └───────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                          SEARCH ENGINE                            │
+│                                                                   │
+│  ┌─────────────────────┐   ┌─────────────────────┐              │
+│  │    Crawler Service   │   │   Search API         │  Frontend  │
+│  │    (services/crawler)│   │   (services/search-api)│ (apps/web)│
+│  │                      │   │                      │            │
+│  │  ┌─────────────────┐ │   │  ┌─────────────────┐ │  ┌───────┐  │
+│  │  │ Crawler Workers  │ │   │  │  GET /search    │ │  │ Home  │  │
+│  │  │ (HTTP fetch)     │◄─┼───┼──┤  GET /autocomplete│◄─┤Results│  │
+│  │  ├─────────────────┤ │   │  ├─────────────────┤ │  └───────┘  │
+│  │  │ Playwright Workers│ │   │  │ BM25 ranking    │ │           │
+│  │  │ (JS rendered)    │ │   │  │ Field boosting   │ │           │
+│  │  ├─────────────────┤ │   │  │ Synonym handling  │ │           │
+│  │  │ Retry Processor  │ │   │  │ Phrase matching  │ │           │
+│  │  ├─────────────────┤ │   │  │ Filtering         │ │           │
+│  │  │ Reindex Worker   │ │   │  └─────────────────┘ │           │
+│  │  ├─────────────────┤ │   │                      │            │
+│  │  │ Playwright Mgr   │ │   │                      │            │
+│  │  └─────────────────┘ │   └──────────────────────┘            │
+│  └──────────┬───────────┘                                       │
+│             │                                                    │
+│             ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                     DATA LAYER                            │   │
+│  │  ┌──────────────┐           ┌──────────────────┐        │   │
+│  │  │    Redis      │           │  Elasticsearch    │        │   │
+│  │  │  ─ crawl:queue│           │  ─ crawled_pages  │        │   │
+│  │  │  ─ playwright:queue│      │  ─ custom analyzer│        │   │
+│  │  │  ─ retry:queue │           │    (stemmer,      │        │   │
+│  │  │  ─ reindex:queue│          │     synonyms,     │        │   │
+│  │  │  ─ indexed:urls │          │     word_delimiter)│        │   │
+│  │  │  ─ domain:*     │           │  ─ edge-ngram     │        │   │
+│  │  │  ─ sitemaps:*   │           │    autocomplete   │        │   │
+│  │  └──────────────┘           └──────────────────┘        │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## Services
 
 | Service | Status | Description |
 |---------|--------|-------------|
-| [Crawler](services/crawler/) | ✅ V1 | Web crawler with Playwright support |
-| API Server | 🚧 Planned | Search query API |
-| Frontend | 🚧 Planned | Search UI |
+| [Crawler](services/crawler/) | ✅ V1 | Web crawler with HTTP + Playwright, content extraction, indexing |
+| [Search API](services/search-api/) | ✅ V1 | BM25 search, synonym expansion, autocomplete, field boosting |
+| [Frontend](apps/web/) | ✅ V1 | Next.js search UI with results, filters, pagination, autocomplete |
 
 ## Quick Start
 
@@ -59,7 +65,7 @@ A self-hosted search engine with a robust web crawler capable of indexing both s
 ```bash
 git clone https://github.com/ahnaf-zamil/search-engine
 cd search-engine
-npm install
+bun install
 ```
 
 ### 2. Start Dependencies
@@ -68,15 +74,12 @@ npm install
 docker-compose up -d
 ```
 
-This starts:
-- Elasticsearch (port 9200)
-- Redis (port 6379)
+Starts Elasticsearch (9200) and Redis (6379).
 
 ### 3. Configure Crawler
 
 ```bash
-cd services/crawler
-cp .env.example .env
+cp services/crawler/.env.example services/crawler/.env
 ```
 
 Edit `.env` with your settings (defaults work for local dev).
@@ -93,20 +96,31 @@ https://example.org
 ### 5. Run Crawler
 
 ```bash
-# Development (with watch)
-npm run dev:crawler
-
-# Production
-cd services/crawler
-npm run build
-npm start
+bun run dev:crawler
 ```
 
-### 6. Verify
+### 6. Start Search API
+
+```bash
+bun run dev:search
+```
+
+### 7. Start Frontend
+
+```bash
+bun run dev:web
+```
+
+Open `http://localhost:3000` and search.
+
+### 8. Verify
 
 ```bash
 # Check indexed documents
 curl http://localhost:9200/pages/_count
+
+# Search via API
+curl "http://localhost:3001/search?q=hello+world"
 
 # Check queue status
 redis-cli LLEN crawl:queue
@@ -117,40 +131,42 @@ redis-cli ZCARD indexed:urls
 
 ```
 search-engine/
+├── apps/
+│   └── web/                 # Next.js frontend (search UI)
 ├── services/
-│   ├── crawler/           # Web crawler service
-│   │   ├── src/
-│   │   │   ├── workers/   # Worker pools
-│   │   │   ├── queue/     # Redis operations
-│   │   │   ├── fetcher/   # HTTP + Playwright
-│   │   │   ├── extractor/ # Content extraction
-│   │   │   ├── indexer/   # Elasticsearch
-│   │   │   └── utils/     # Utilities
-│   │   ├── seeds/         # Seed URLs
-│   │   └── .env.example
-│   └── api/               # API server (future)
-├── docs/
-│   └── crawler-architecture.md
+│   ├── crawler/             # Web crawler (HTTP + Playwright)
+│   └── search-api/          # Fastify search API server
 ├── docker-compose.yml
 └── package.json
 ```
 
+## V1 Features
+
+- ✅ **Crawler**: HTTP + Playwright hybrid crawling, SPA detection, content extraction (h1-h6, paragraphs, metadata), language detection, robots.txt compliance, sitemap discovery
+- ✅ **Indexing**: Elasticsearch with custom analyzers (stemming, synonyms, edge-ngram autocomplete), content-hash dedup, 24h reindex cycle
+- ✅ **Backpressure**: Memory pressure detection (1.5GB limit) with pause-on-pressure, per-domain concurrency cap (2), global token bucket rate limiting, distributed domain delay
+- ✅ **Resilience**: Retry chain with exponential backoff (max 3), circuit breaker on Playwright, graceful shutdown, fresh start mode (`--fresh`)
+- ✅ **Search API**: BM25 relevance + field boosting (title^10, ogTitle^5, metaDescription^3), phrase matching, typo tolerance (fuzziness AUTO), minimum_should_match, synonym expansion (30+ tech + 400+ English pairs), autocomplete (edge-ngram prefix)
+- ✅ **Frontend**: Next.js App Router, animated search UI, results with highlighted snippets, domain/language/contentType filters, date/relevance sort, pagination
+
 ## Configuration
 
-### Environment Variables
+See `services/crawler/.env.example` for full crawler configuration.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ES_HOST` | `http://localhost:9200` | Elasticsearch URL |
-| `ES_INDEX` | `crawled_pages` | Index name |
-| `REDIS_HOST` | `localhost` | Redis host |
-| `REDIS_PORT` | `6379` | Redis port |
-| `CRAWLER_WORKERS` | `5` | Crawler worker count |
-| `PLAYWRIGHT_WORKERS` | `2` | Playwright worker count |
-| `DOMAIN_DELAY_MS` | `200` | Per-domain delay (ms) |
-| `GLOBAL_RPS` | `10` | Global requests per second |
-| `LOG_LEVEL` | `info` | Logging level |
-| `PLAYWRIGHT_HEADLESS` | `true` | Run browser headless |
+### Key Environment Variables
+
+| Variable | Default | Service | Description |
+|----------|---------|---------|-------------|
+| `ES_HOST` | `http://localhost:9200` | All | Elasticsearch URL |
+| `ES_INDEX` | `crawled_pages` | All | Index name |
+| `REDIS_HOST` | `localhost` | Crawler | Redis host |
+| `REDIS_PORT` | `6379` | Crawler | Redis port |
+| `PORT` | `3001` | Search API | HTTP server port |
+| `CRAWLER_WORKERS` | `15` | Crawler | HTTP crawl concurrency |
+| `PLAYWRIGHT_WORKERS` | `5` | Crawler | JS render concurrency |
+| `DOMAIN_DELAY_MS` | `200` | Crawler | Per-domain rate limit |
+| `GLOBAL_RPS` | `10` | Crawler | Global rate limit |
+| `MAX_RETRIES` | `3` | Crawler | Fetch retry attempts |
 
 ### Guardrails
 
@@ -159,150 +175,81 @@ search-engine/
 | Max Indexed Pages | 5,000,000 | Prevent unbounded growth |
 | Max Queue Size | 50,000 | Backpressure |
 | Max Crawl Depth | 5 levels | Prevent infinite chains |
+| Max Links/Page | 50 | Focus on quality links |
+| Min Content Words | 50 | Skip boilerplate-only pages |
 | Reindex Cycle | 24 hours | Content freshness |
 | Memory Limit | 1.5GB | System protection |
-
-## Performance
-
-### Benchmarks
-
-| Metric | Value |
-|--------|-------|
-| Worker Configuration | 15 crawler + 2 Playwright (default) |
-| Avg Crawl Speed | 50-100 pages/minute (HTTP) |
-| Rate Limits | 200ms domain delay, 10 RPS global |
-| Smart Extraction | 95% content reduction (excludes boilerplate) |
-| Memory Usage | ~800MB-1.2GB |
-| Features | URL filtering, Anti-bot detection, 429 handling, Distributed rate limiting |
-
-### Optimizations
-
-- **Smart content extraction** - Targets main content, excludes navigation/footers
-- **Atomic deduplication** - Lua script prevents race conditions
-- **Retry logic** - Exponential backoff for transient failures
-- **Token bucket rate limiting** - Efficient global rate control
+| Domain Concurrency | 2 | Prevent hammering hosts |
 
 ## Available Scripts
 
-```bash
-# Root
-npm run dev:crawler        # Run crawler in dev mode
-
-# Crawler service
-npm run dev                # Development with watch
-npm run build              # Build TypeScript
-npm run start              # Run production build
-npm run load-seeds         # Manually load seeds
-npm run reindex            # Trigger reindex cycle
-```
-
-## Monitoring
-
-### Logs
+### Root
 
 ```bash
-# View crawler logs
-tail -f services/crawler/crawler.log
-
-# Docker logs
-docker-compose logs -f elasticsearch
-docker-compose logs -f redis
+bun run dev:crawler     # Start crawler (watch mode)
+bun run dev:search      # Start search API (watch mode)
+bun run dev:web         # Start frontend (Next.js dev)
+bun run build:crawler   # Build crawler
+bun run build:search    # Build search API
+bun run build:web       # Build frontend
+bun run load-seeds      # Manually load seed URLs
+bun run reindex         # Trigger reindex cycle
 ```
 
-### Redis
+### Crawler Service
 
 ```bash
-# Queue lengths
-redis-cli LLEN crawl:queue
-redis-cli ZCARD reindex:queue
-redis-cli ZCARD indexed:urls
-
-# Domain rate limits
-redis-cli KEYS "domain:last:*"
+bun run dev             # Dev with watch
+bun run build           # Build TypeScript
+bun run start           # Run production build
+bun run load-seeds      # Load seeds/seeds.txt
+bun run reindex         # One-shot reindex
+bun run reset           # Interactive: delete ES index + Redis queues
+bun run submit <url>    # Push URL to front of crawl queue
+bun run stats           # Show crawler statistics
 ```
 
-### Elasticsearch
+### Search API
 
 ```bash
-# Document count
-curl http://localhost:9200/pages/_count
-
-# Recent documents
-curl http://localhost:9200/pages/_search?size=5
-
-# Index stats
-curl http://localhost:9200/pages/_stats
+bun run dev             # Dev mode
+bun run build           # Build TypeScript
+bun run start           # Run production build
 ```
 
-## Development
-
-### Adding New Services
-
-1. Create service folder in `services/`
-2. Add to root `package.json` workspaces
-3. Add to `docker-compose.yml` if needed
-4. Document in this README
-
-### Testing
+### Frontend
 
 ```bash
-# Run tests (when available)
-npm test
-
-# Type check
-npx tsc --noEmit
+bun run dev             # Next.js dev server
+bun run build           # Production build
+bun run start           # Start production server
+bun run lint            # ESLint
 ```
 
-## Roadmap
+## Performance
 
-### V1 (Current)
-- ✅ Crawler service with Playwright support
-- ✅ Smart content extraction (excludes boilerplate)
-- ✅ Automatic reindexing (24h cycle)
-- ✅ Resource guardrails (memory, rate limits)
-- ✅ Retry logic with exponential backoff
-- ✅ Atomic URL deduplication
-- ✅ High-performance configuration (15+5 workers)
+| Metric | Value |
+|--------|-------|
+| Worker Configuration | 15 crawler + 5 Playwright (default) |
+| Avg Crawl Speed | 50-100 pages/minute (HTTP) |
+| Rate Limits | 200ms domain delay, 10 RPS global |
+| Content Reduction | ~95% (excludes boilerplate) |
+| Memory Usage | ~800MB-1.2GB |
 
-### V2 (Planned)
-- [ ] Robots.txt compliance
-- [ ] Domain allowlist/blocklist
-- [ ] Search API server
-- [ ] Basic ranking algorithm
-- [ ] Content change detection (skip unchanged hashes)
-- [ ] Health check endpoints
+## Future Plans
 
-### V3 (Future)
-- [ ] Web UI for search
-- [ ] Analytics dashboard
-- [ ] Distributed crawling
-- [ ] Advanced ranking (PageRank, etc.)
-- [ ] API authentication
-- [ ] Sitemap.xml support
+- [ ] Rate limiting on search API (`@fastify/rate-limit`)
+- [ ] Redis caching for popular queries (30-60s TTL)
+- [ ] Deep pagination via `search_after` (beyond 10K results)
+- [ ] Autocomplete fallback to `match_bool_prefix` on `all_text` (short/obscure queries)
 
 ## Troubleshooting
 
-### Elasticsearch Connection Failed
+### Elasticsearch / Redis Connection Failed
 
 ```bash
-# Check if ES is running
 docker-compose ps
-
-# Restart ES
-docker-compose restart elasticsearch
-
-# Check logs
-docker-compose logs elasticsearch
-```
-
-### Redis Connection Failed
-
-```bash
-# Check if Redis is running
-docker-compose ps
-
-# Restart Redis
-docker-compose restart redis
+docker-compose restart elasticsearch  # or redis
 ```
 
 ### Memory Issues
@@ -314,20 +261,6 @@ CRAWLER_WORKERS=10
 PLAYWRIGHT_WORKERS=3
 ```
 
-### Slow Crawling
-
-If crawling seems slow, check rate limit settings:
-
-```env
-# For faster crawling (less respectful)
-DOMAIN_DELAY_MS=50
-GLOBAL_RPS=150
-
-# For slower, more respectful crawling
-DOMAIN_DELAY_MS=500
-GLOBAL_RPS=20
-```
-
 ### Playwright Installation
 
 ```bash
@@ -336,21 +269,6 @@ npx playwright install
 npx playwright install-deps
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-- [Elasticsearch](https://www.elastic.co/elasticsearch/) - Search and analytics engine
-- [Redis](https://redis.io/) - In-memory data store
-- [Playwright](https://playwright.dev/) - Browser automation
-- [Cheerio](https://cheerio.js.org/) - HTML parsing
+MIT License — see [LICENSE](LICENSE) for details.

@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import { config } from 'dotenv';
 import { searchRoutes } from './routes/search';
 import { autocompleteRoutes } from './routes/autocomplete';
@@ -11,6 +12,10 @@ const fastify = Fastify({
 });
 
 const PORT = parseInt(process.env.PORT || '3001');
+
+fastify.register(cors, {
+  origin: true,
+});
 
 fastify.get('/health', async () => {
   return { status: 'ok' };

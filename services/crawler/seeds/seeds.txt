@@ -1,8 +1,2 @@
-
-
-https://news.ycombinator.com/
-https://old.reddit.com/
-https://www.aljazeera.com/
-https://www.bbc.com/news
-https://www.gutenberg.org
-https://en.wikipedia.org/wiki/Main_Page
+https://github.com/ahnaf-zamil
+https://www.interdb.jp/pg

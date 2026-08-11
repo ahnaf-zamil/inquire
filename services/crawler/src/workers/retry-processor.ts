@@ -39,8 +39,10 @@ async function processRetries(): Promise<void> {
       const crawlJob: CrawlJob = {
         url: job.url,
         depth: 0,
-        source: 'reindex',
+        source: 'retry',
         enqueuedAt: Date.now(),
+        attempt: job.attempt,
+        maxAttempts: job.maxAttempts || CONFIG.maxRetries,
       };
 
       await pushToCrawlQueue(crawlJob);

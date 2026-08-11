@@ -3,6 +3,11 @@ import { logger } from './logger';
 
 let lastCheck = 0;
 let checkInterval = CONFIG.memoryCheckInterval;
+let memoryPressure = false;
+
+export function isUnderMemoryPressure(): boolean {
+  return memoryPressure;
+}
 
 export function getMemoryUsage(): { rss: number; heapUsed: number; heapTotal: number } {
   const usage = process.memoryUsage();
@@ -37,7 +42,11 @@ export function checkMemoryUsage(): void {
   const usage = getMemoryUsageMB();
 
   if (isMemoryLimitExceeded()) {
-    logger.warn('Memory limit exceeded', usage);
+    memoryPressure = true;
+    logger.warn('Memory limit exceeded, enabling backpressure', usage);
+  } else if (memoryPressure && usage.rss < CONFIG.memoryLimitBytes * 0.8) {
+    memoryPressure = false;
+    logger.info('Memory pressure cleared', usage);
   }
 
   logger.debug('Memory usage', usage);
