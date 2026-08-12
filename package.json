@@ -2,7 +2,8 @@
   "name": "search-engine",
   "private": true,
   "workspaces": [
-    "services/*"
+    "services/*",
+    "apps/*"
   ],
   "scripts": {
     "dev:crawler": "bun run --cwd services/crawler dev",
@@ -11,11 +12,11 @@
     "build:search": "bun run --cwd services/search-api build",
     "load-seeds": "bun run --cwd services/crawler load-seeds",
     "reindex": "bun run --cwd services/crawler reindex",
-    "dev:web": "cd apps/web && bun run dev",
-    "build:web": "cd apps/web && bun run build"
+    "dev:web": "bun run --cwd apps/web dev",
+    "build:web": "bun run --cwd apps/web build",
+    "start:web": "bun run --cwd apps/web start"
   },
   "devDependencies": {
-    "shadcn": "^4.16.2",
     "typescript": "^5.0.0"
   }
 }
