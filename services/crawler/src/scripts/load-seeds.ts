@@ -3,7 +3,7 @@ import path from 'path';
 import { CrawlJob } from '../types';
 import { logger } from '../utils/logger';
 import { redis } from '../queue';
-import { pushToCrawlQueue, batchPushToCrawlQueue } from '../queue/crawl';
+import { pushToCrawlQueue, pushToCrawlQueueFront } from '../queue/crawl';
 import { normalizeUrl, getDomain } from '../utils/url';
 import { computeShortHash } from '../utils/hash';
 import { fetchSitemapUrls } from '../fetcher/sitemap';
@@ -76,8 +76,11 @@ async function loadSeeds(): Promise<void> {
   }
 
   if (allSitemapJobs.length > 0) {
-    const result = await batchPushToCrawlQueue(allSitemapJobs);
-    logger.info('All sitemap URLs queued', { totalDiscovered: allSitemapJobs.length, queued: result.queued, skipped: result.skipped });
+    let queued = 0;
+    for (const job of allSitemapJobs) {
+      if (await pushToCrawlQueueFront(job)) queued++;
+    }
+    logger.info('All sitemap URLs queued', { totalDiscovered: allSitemapJobs.length, queued });
   }
 
   await redis.set(SEED_LOADED_KEY, fileHash);

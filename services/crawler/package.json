@@ -6,22 +6,23 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
-    "load-seeds": "ts-node src/scripts/load-seeds.ts",
-    "reindex": "ts-node src/scripts/reindex-cron.ts",
-    "stats": "ts-node src/scripts/stats.ts",
-    "stats:indexed": "ts-node src/scripts/stats.ts indexed",
-    "stats:queues": "ts-node src/scripts/stats.ts queues",
-    "stats:domains": "ts-node src/scripts/stats.ts domains",
-    "stats:recent": "ts-node src/scripts/stats.ts recent",
-    "stats:speed": "ts-node src/scripts/stats.ts speed",
-    "stats:content-type": "ts-node src/scripts/stats.ts content-type",
-    "stats:size": "ts-node src/scripts/stats.ts size",
-    "reset": "ts-node src/scripts/reset.ts",
-    "submit": "ts-node src/scripts/submit.ts"
+    "dev": "bun src/index.ts",
+    "load-seeds": "bun src/scripts/load-seeds.ts",
+    "reindex": "bun src/scripts/reindex-cron.ts",
+    "stats": "bun src/scripts/stats.ts",
+    "stats:indexed": "bun src/scripts/stats.ts indexed",
+    "stats:queues": "bun src/scripts/stats.ts queues",
+    "stats:domains": "bun src/scripts/stats.ts domains",
+    "stats:recent": "bun src/scripts/stats.ts recent",
+    "stats:speed": "bun src/scripts/stats.ts speed",
+    "stats:content-type": "bun src/scripts/stats.ts content-type",
+    "stats:size": "bun src/scripts/stats.ts size",
+    "reset": "bun src/scripts/reset.ts",
+    "submit": "bun src/scripts/submit.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.11.0",
+    "@elastic/transport": "^8.10.2",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.3.1",
     "franc-min": "^6.2.0",
@@ -32,7 +33,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "ts-node": "^10.9.2",
     "typescript": "^5.3.0"
   }
 }

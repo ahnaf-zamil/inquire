@@ -1,7 +1,7 @@
 import { CONFIG } from '../config';
 import { CrawlJob, PageDocument } from '../types';
 import { logger } from '../utils/logger';
-import { popFromCrawlQueue, batchPushToCrawlQueue, getCrawlQueueLength } from '../queue/crawl';
+import { popFromCrawlQueue, batchPushToCrawlQueue, pushToCrawlQueueFront, getCrawlQueueLength } from '../queue/crawl';
 import { tryMarkUrlIndexed, getIndexedUrlCount, removeFromIndexed } from '../queue/visited';
 import { checkDomainRateLimit, checkGlobalRateLimit } from '../queue/rate-limit';
 import { fetchUrl } from '../fetcher';
@@ -30,8 +30,11 @@ async function discoverAndQueueSitemaps(domain: string): Promise<void> {
         source: 'link',
         enqueuedAt: Date.now(),
       }));
-      const result = await batchPushToCrawlQueue(jobs);
-      logger.info('Inline sitemap discovery', { domain, urlCount: sitemapUrls.length, queued: result.queued });
+      let queued = 0;
+      for (const job of jobs) {
+        if (await pushToCrawlQueueFront(job)) queued++;
+      }
+      logger.info('Inline sitemap discovery', { domain, urlCount: sitemapUrls.length, queued });
     }
   } catch (error) {
     logger.warn('Inline sitemap discovery failed', { domain, error });

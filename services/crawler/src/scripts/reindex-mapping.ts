@@ -1,4 +1,5 @@
 import { Client } from '@elastic/elasticsearch';
+import { HttpConnection } from '@elastic/transport/lib/connection';
 import { config } from 'dotenv';
 import readline from 'readline';
 
@@ -7,6 +8,7 @@ config();
 const esClient = new Client({
   node: process.env.ES_HOST || 'http://localhost:9200',
   maxRetries: 3,
+  Connection: HttpConnection,
 });
 
 const ES_INDEX = process.env.ES_INDEX || 'crawled_pages';

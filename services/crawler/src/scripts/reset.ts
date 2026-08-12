@@ -1,4 +1,5 @@
 import { Client } from '@elastic/elasticsearch';
+import { HttpConnection } from '@elastic/transport/lib/connection';
 import Redis from 'ioredis';
 import { config } from 'dotenv';
 import readline from 'readline';
@@ -8,6 +9,7 @@ config();
 
 const esClient = new Client({
   node: process.env.ES_HOST || 'http://localhost:9200',
+  Connection: HttpConnection,
 });
 
 const redis = new Redis({

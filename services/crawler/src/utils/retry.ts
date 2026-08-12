@@ -67,19 +67,3 @@ export async function withRetry<T>(
 
   throw lastError!;
 }
-
-export function isRetryableError(error: Error): boolean {
-  const retryableMessages = [
-    'timeout',
-    'ETIMEDOUT',
-    'ECONNREFUSED',
-    'ECONNRESET',
-    'ENOTFOUND',
-    'temporary failure',
-    'network',
-    'retry',
-  ];
-  
-  const message = error.message.toLowerCase();
-  return retryableMessages.some(msg => message.includes(msg));
-}

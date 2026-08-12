@@ -165,7 +165,3 @@ async function processPlaywrightJob(workerId: string, job: CrawlJob): Promise<vo
     });
   }
 }
-
-export async function pushToPlaywrightQueue(job: CrawlJob): Promise<void> {
-  await redis.lpush(PLAYWRIGHT_QUEUE_KEY, JSON.stringify(job));
-}

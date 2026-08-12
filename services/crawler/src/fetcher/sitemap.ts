@@ -1,6 +1,7 @@
 import { CONFIG } from '../config';
 import { logger } from '../utils/logger';
 import { getDomain } from '../utils/url';
+import zlib from 'zlib';
 
 const COMMON_SITEMAP_PATHS = [
   '/sitemap.xml',
@@ -119,7 +120,12 @@ async function fetchAndParseSitemap(
       return { urls: [], childSitemaps: [] };
     }
 
-    const text = await response.text();
+    const raw = await response.arrayBuffer();
+    const buffer = Buffer.from(raw);
+    const isGzip = url.toLowerCase().endsWith('.gz');
+    const text = isGzip
+      ? zlib.gunzipSync(buffer).toString('utf-8')
+      : buffer.toString('utf-8');
     const parsedUrls = parseSitemapXml(text);
 
     const pageUrls: string[] = [];
@@ -213,7 +219,8 @@ function parseSitemapXml(xml: string): string[] {
 
 function isSitemapIndex(url: string): boolean {
   const lower = url.toLowerCase();
-  return lower.includes('sitemap-index') || lower.includes('sitemap.xml');
+  const sitemapRe = /\/sitemap[\w-]*\.\w+(\.gz)?$/i;
+  return sitemapRe.test(lower);
 }
 
 function isSameDomain(url: string, domain: string): boolean {

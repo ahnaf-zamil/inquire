@@ -51,7 +51,3 @@ export function checkMemoryUsage(): void {
 
   logger.debug('Memory usage', usage);
 }
-
-export function setMemoryCheckInterval(interval: number): void {
-  checkInterval = interval;
-}

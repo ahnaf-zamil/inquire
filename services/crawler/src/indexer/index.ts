@@ -1,4 +1,5 @@
 import { Client } from '@elastic/elasticsearch';
+import { HttpConnection } from '@elastic/transport/lib/connection';
 import { CONFIG } from '../config';
 import { logger } from '../utils/logger';
 
@@ -8,6 +9,7 @@ export const esClient = new Client({
   requestTimeout: CONFIG.httpFetchTimeout,
   sniffOnStart: false,
   sniffOnConnectionFault: true,
+  Connection: HttpConnection,
 });
 
 export async function checkEsHealth(): Promise<boolean> {

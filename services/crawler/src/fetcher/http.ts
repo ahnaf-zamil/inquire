@@ -50,6 +50,24 @@ export function detectSpaPatterns(html: string): boolean {
     return true;
   }
 
+  // Custom element root tags (Lit, Web Components, etc.)
+  const hasEmptyShell = html.match(/<body[^>]*>[\s\n]*<[a-z]+-[a-z]+[^>]*>[\s\n]*<\/[a-z]+-[a-z]+>/i);
+  if (hasEmptyShell) {
+    logger.debug('Detected web component shell', { tag: hasEmptyShell[1] || 'unknown' });
+    return true;
+  }
+
+  // Body has only <app-root>, <app-shell> or similar with js-required noscript
+  const bodyContent = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyContent) {
+    const inner = bodyContent[1].trim().replace(/<noscript[\s\S]*?<\/noscript>/gi, '').trim();
+    const customElements = inner.match(/<[a-z]+-[a-z]+[^>]*>/);
+    if (customElements && inner.replace(/<[^>]+>/g, '').trim().length < 50) {
+      logger.debug('Detected shell-only body with custom element', { tag: customElements[0] });
+      return true;
+    }
+  }
+
   // Check for common SPA loader patterns
   if (htmlLower.includes('loading...') && htmlLower.includes('window.onload')) {
     logger.debug('Detected SPA loader pattern');
