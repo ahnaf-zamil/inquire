@@ -1,48 +1,6 @@
-# Search Engine
+# Inquire
 
-Self-hosted web search engine with crawler, ranking API, and search UI.
-
-## Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                          SEARCH ENGINE                            │
-│                                                                   │
-│  ┌─────────────────────┐   ┌─────────────────────┐              │
-│  │    Crawler Service   │   │   Search API         │  Frontend  │
-│  │    (services/crawler)│   │   (services/search-api)│ (apps/web)│
-│  │                      │   │                      │            │
-│  │  ┌─────────────────┐ │   │  ┌─────────────────┐ │  ┌───────┐  │
-│  │  │ Crawler Workers  │ │   │  │  GET /search    │ │  │ Home  │  │
-│  │  │ (HTTP fetch)     │◄─┼───┼──┤  GET /autocomplete│◄─┤Results│  │
-│  │  ├─────────────────┤ │   │  ├─────────────────┤ │  └───────┘  │
-│  │  │ Playwright Workers│ │   │  │ BM25 ranking    │ │           │
-│  │  │ (JS rendered)    │ │   │  │ Field boosting   │ │           │
-│  │  ├─────────────────┤ │   │  │ Synonym handling  │ │           │
-│  │  │ Retry Processor  │ │   │  │ Phrase matching  │ │           │
-│  │  ├─────────────────┤ │   │  │ Filtering         │ │           │
-│  │  │ Reindex Worker   │ │   │  └─────────────────┘ │           │
-│  │  ├─────────────────┤ │   │                      │            │
-│  │  │ Playwright Mgr   │ │   │                      │            │
-│  │  └─────────────────┘ │   └──────────────────────┘            │
-│  └──────────┬───────────┘                                       │
-│             │                                                    │
-│             ▼                                                    │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │                     DATA LAYER                            │   │
-│  │  ┌──────────────┐           ┌──────────────────┐        │   │
-│  │  │    Redis      │           │  Elasticsearch    │        │   │
-│  │  │  ─ crawl:queue│           │  ─ crawled_pages  │        │   │
-│  │  │  ─ playwright:queue│      │  ─ custom analyzer│        │   │
-│  │  │  ─ retry:queue │           │    (stemmer,      │        │   │
-│  │  │  ─ reindex:queue│          │     synonyms,     │        │   │
-│  │  │  ─ indexed:urls │          │     word_delimiter)│        │   │
-│  │  │  ─ domain:*     │           │  ─ edge-ngram     │        │   │
-│  │  │  ─ sitemaps:*   │           │    autocomplete   │        │   │
-│  │  └──────────────┘           └──────────────────┘        │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────┘
-```
+Full-stack search engine: Redis-queued HTTP+Playwright crawler with per-domain rate limiting, Elasticsearch with custom analyzers, and a BM25 Fastify API with autocomplete.
 
 ## Services
 
@@ -63,8 +21,8 @@ Self-hosted web search engine with crawler, ranking API, and search UI.
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/ahnaf-zamil/search-engine
-cd search-engine
+git clone https://github.com/ahnaf-zamil/inquire
+cd inquire
 bun install
 ```
 
@@ -130,7 +88,7 @@ redis-cli ZCARD indexed:urls
 ## Project Structure
 
 ```
-search-engine/
+inquire/
 ├── apps/
 │   └── web/                 # Next.js frontend (search UI)
 ├── services/
