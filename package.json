@@ -5,12 +5,12 @@
     "services/*"
   ],
   "scripts": {
-    "dev:crawler": "cd services/crawler && npm run dev",
-    "dev:search": "cd services/search-api && npm run dev",
-    "build:crawler": "cd services/crawler && npm run build",
-    "build:search": "cd services/search-api && npm run build",
-    "load-seeds": "cd services/crawler && npm run load-seeds",
-    "reindex": "cd services/crawler && npm run reindex",
+    "dev:crawler": "bun run --cwd services/crawler dev",
+    "dev:search": "bun run --cwd services/search-api dev",
+    "build:crawler": "bun run --cwd services/crawler build",
+    "build:search": "bun run --cwd services/search-api build",
+    "load-seeds": "bun run --cwd services/crawler load-seeds",
+    "reindex": "bun run --cwd services/crawler reindex",
     "dev:web": "cd apps/web && bun run dev",
     "build:web": "cd apps/web && bun run build"
   },
