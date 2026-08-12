@@ -11,7 +11,7 @@ export async function autocompleteRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      const response = await esClient.search({
+      const primaryResponse = await esClient.search({
         index: ES_INDEX,
         query: {
           match_phrase_prefix: {
@@ -25,13 +25,39 @@ export async function autocompleteRoutes(fastify: FastifyInstance) {
         _source: ['url', 'title'],
       })
 
-      const suggestions: Suggestion[] = response.hits.hits.map(hit => {
+      const suggestions: Suggestion[] = primaryResponse.hits.hits.map(hit => {
         const source = hit._source as Pick<CrawledPage, 'url' | 'title'>
         return {
           text: source.title,
           url: source.url,
         }
       })
+
+      const shouldFallback = q.length >= 5 ? suggestions.length < 3 : suggestions.length < limit
+
+      if (shouldFallback) {
+        const fallbackResponse = await esClient.search({
+          index: ES_INDEX,
+          query: {
+            match_bool_prefix: {
+              all_text: {
+                query: q,
+                minimum_should_match: '50%',
+              },
+            },
+          },
+          size: limit - suggestions.length,
+          _source: ['url', 'title'],
+        })
+
+        const existingUrls = new Set(suggestions.map(s => s.url))
+        for (const hit of fallbackResponse.hits.hits) {
+          const source = hit._source as Pick<CrawledPage, 'url' | 'title'>
+          if (!existingUrls.has(source.url)) {
+            suggestions.push({ text: source.title, url: source.url })
+          }
+        }
+      }
 
       return { suggestions }
     } catch (error) {

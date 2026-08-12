@@ -7,6 +7,7 @@ export interface SearchQuery {
   contentType?: string
   sort?: string
   order?: string
+  cursor?: string
 }
 
 export interface SearchResultHit {
@@ -25,6 +26,7 @@ export interface SearchResult {
   total: number
   page: number
   totalPages: number
+  nextCursor: string | null
 }
 
 export interface AutocompleteQuery {

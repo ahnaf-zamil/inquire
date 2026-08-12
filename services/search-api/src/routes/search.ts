@@ -1,13 +1,23 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { esClient, ES_INDEX } from '../lib/elastic'
 import type { SearchQuery, SearchResult, SearchResultHit, CrawledPage } from '../lib/types'
+import { getCached, setCache, cacheKey } from '../lib/cache'
+import type { Sort } from '@elastic/elasticsearch/lib/api/types'
 
 export async function searchRoutes(fastify: FastifyInstance) {
   fastify.get<{ Querystring: SearchQuery }>('/search', async (req: FastifyRequest<{ Querystring: SearchQuery }>, reply: FastifyReply) => {
-    const { q, page = 1, limit = 10, domain, language, contentType, sort = 'relevance', order = 'desc' } = req.query
+    const { q, page = 1, limit = 10, domain, language, contentType, sort = 'relevance', order = 'desc', cursor } = req.query
 
     if (!q) {
       return reply.status(400).send({ error: 'Query parameter "q" is required' })
+    }
+
+    const cKey = cursor ? '' : cacheKey(q, page, limit, { domain, language, contentType, sort, order })
+    if (!cursor && cKey) {
+      const cached = await getCached(cKey)
+      if (cached) {
+        return JSON.parse(cached)
+      }
     }
 
     const isPhrase = q.match(/"([^"]+)"/)
@@ -44,11 +54,12 @@ export async function searchRoutes(fastify: FastifyInstance) {
     if (language) filter.push({ term: { language } })
     if (contentType) filter.push({ term: { contentType } })
 
-    const from = (page - 1) * limit
+    const from = cursor ? undefined : (page - 1) * limit
+    const searchAfter = cursor ? JSON.parse(cursor) : undefined
 
-    const sortOption = sort === 'date'
-      ? [{ lastIndexed: { order: order === 'asc' ? 'asc' as const : 'desc' as const } }]
-      : [{ _score: { order: 'desc' as const } }]
+    const sortOption: Sort = sort === 'date'
+      ? [{ lastIndexed: { order: order === 'asc' ? 'asc' as const : 'desc' as const } }, { _id: { order: 'asc' as const } }]
+      : [{ _score: { order: 'desc' as const } }, { _id: { order: 'asc' as const } }]
 
     try {
       const response = await esClient.search({
@@ -67,7 +78,8 @@ export async function searchRoutes(fastify: FastifyInstance) {
           post_tags: ['</em>'],
         },
         from,
-        size: limit,
+        search_after: searchAfter,
+        size: cursor ? limit + 1 : limit,
         sort: sortOption,
       })
 
@@ -76,7 +88,21 @@ export async function searchRoutes(fastify: FastifyInstance) {
         : response.hits.total?.value ?? 0
       const totalPages = Math.ceil(total / limit)
 
-      const results: SearchResultHit[] = response.hits.hits.map(hit => {
+      let hits = response.hits.hits
+      let nextCursor: string | null = null
+
+      if (cursor) {
+        const hasMore = hits.length > limit
+        if (hasMore) {
+          hits = hits.slice(0, limit)
+        }
+        nextCursor = hasMore && hits.length > 0 ? JSON.stringify(hits[hits.length - 1].sort) : null
+      } else {
+        const hasMore = page * limit < total
+        nextCursor = hasMore && hits.length > 0 ? JSON.stringify(hits[hits.length - 1].sort) : null
+      }
+
+      const results: SearchResultHit[] = hits.map(hit => {
         const source = hit._source as CrawledPage
         const highlights = hit.highlight
         return {
@@ -94,7 +120,15 @@ export async function searchRoutes(fastify: FastifyInstance) {
         }
       })
 
-      const result: SearchResult = { results, total, page, totalPages }
+      const result: SearchResult = {
+        results,
+        total,
+        page: cursor ? 1 : page,
+        totalPages: cursor ? 0 : totalPages,
+        nextCursor,
+      }
+
+      await setCache(cKey, JSON.stringify(result))
       return result
     } catch (error) {
       console.error('Search error:', error)
